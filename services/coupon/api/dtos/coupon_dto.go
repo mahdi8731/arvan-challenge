@@ -11,6 +11,7 @@ type CouponDto struct {
 	Code         string    `json:"code" validate:"required"`
 	ExpireDate   time.Time `json:"expire_date" validate:"required"`
 	ChargeAmount int       `json:"charge_amount" validate:"required"`
+	AllowedTimes int       `json:"allowed_times" validate:"required"`
 }
 
 func (cd *CouponDto) ConvertToModel() *db.Coupon {
@@ -20,5 +21,6 @@ func (cd *CouponDto) ConvertToModel() *db.Coupon {
 		Code:         cd.Code,
 		ExpireDate:   cd.ExpireDate,
 		ChargeAmount: cd.ChargeAmount,
+		AllowedTimes: cd.AllowedTimes,
 	}
 }

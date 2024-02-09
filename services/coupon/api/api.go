@@ -9,6 +9,7 @@ import (
 
 	zerolog "github.com/rs/zerolog"
 
+	"arvan-challenge/services/coupon/internal/cache"
 	"arvan-challenge/services/coupon/internal/db"
 	env "arvan-challenge/services/coupon/pkg/env"
 
@@ -27,6 +28,7 @@ type api struct {
 	logger    *zerolog.Logger
 	config    *env.Config
 	dbHandler db.DBHandler
+	cache     cache.Cache
 }
 
 func NewApi(l *zerolog.Logger, cfg *env.Config) Api {
@@ -47,6 +49,8 @@ func (a *api) Init() {
 
 	a.dbHandler = db.NewDBHandler(a.config, a.logger)
 
+	a.cache = cache.NewCache(a.config, a.logger)
+
 	// register recover middleware for catching error
 	a.app.Use(fiber_recover.New())
 
@@ -65,7 +69,7 @@ func (a *api) AddControllers() {
 	api_v1.Get("/health1", healthController.Health1)
 	api_v1.Get("/health2", healthController.Health2)
 
-	couponController := v1.NewCouponController(a.dbHandler, a.logger, a.config)
+	couponController := v1.NewCouponController(a.dbHandler, a.cache, a.logger, a.config)
 
 	api_v1.Post("/create-coupon", couponController.CreateCoupon)
 }

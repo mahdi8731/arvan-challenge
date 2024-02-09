@@ -65,9 +65,9 @@ func (h *dbHandler) CreateCoupon(c *Coupon, ctx *fasthttp.RequestCtx) (*Coupon, 
 	}
 
 	err = h.db.QueryRow(ctx, `
-			INSERT INTO coupons (coupon_id, code, expire_date, charge_amount)
-			VALUES ($1, $2, $3, $4) RETURNING *;`,
-		c.Id, c.Code, c.ExpireDate.Format("2006-01-02 15:04:05"), c.ChargeAmount).Scan(&coupon.Id, &coupon.Code, &coupon.ExpireDate, &coupon.ChargeAmount)
+			INSERT INTO coupons (coupon_id, code, expire_date, charge_amount, allowed_times)
+			VALUES ($1, $2, $3, $4, $5) RETURNING *;`,
+		c.Id, c.Code, c.ExpireDate, c.ChargeAmount, c.AllowedTimes).Scan(&coupon.Id, &coupon.Code, &coupon.ExpireDate, &coupon.ChargeAmount, &coupon.AllowedTimes)
 
 	if err != nil {
 		h.l.Error().Msgf("An error occured while executing query: %v", err)
@@ -88,13 +88,13 @@ func (h *dbHandler) GetCoupon(code string, ctx context.Context) (*Coupon, error)
 		return &coupon, util_error.NewInternalServerError("Somthing went wrong")
 	}
 
-	if row.Next() {
-		row.Scan(&coupon.Id, &coupon.Code, &coupon.ExpireDate, &coupon.ChargeAmount)
-	}
+	for row.Next() {
+		err = row.Scan(&coupon.Id, &coupon.Code, &coupon.ExpireDate, &coupon.ChargeAmount, &coupon.AllowedTimes)
 
-	if err != nil {
-		h.l.Error().Msgf("An error occured while executing query: %v", err)
-		return &coupon, util_error.NewInternalServerError("Somthing went wrong")
+		if err != nil {
+			h.l.Error().Msgf("An error occured while executing query: %v", err)
+			return &coupon, util_error.NewInternalServerError("Somthing went wrong")
+		}
 	}
 
 	return &coupon, nil
