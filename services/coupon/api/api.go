@@ -71,7 +71,8 @@ func (a *api) AddControllers() {
 
 	couponController := v1.NewCouponController(a.dbHandler, a.cache, a.logger, a.config)
 
-	api_v1.Post("/create-coupon", couponController.CreateCoupon)
+	api_v1.Post("/create-coupon", couponController.CreateCoupon) // POST /api/v1/create-coupon
+	api_v1.Post("/use-coupon", couponController.UseCoupon)       // POST /api/v1/create-coupon
 }
 
 func (a *api) Run() {

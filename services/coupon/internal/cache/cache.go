@@ -17,6 +17,7 @@ var ALLOWED_TIME_KEY = "allowed-times"
 type Cache interface {
 	SetKeys(key string, fv map[string]any, ctx *fasthttp.RequestCtx) error
 	SetKeyForCoupon(coupon *db.Coupon, ctx *fasthttp.RequestCtx) error
+	CheckAndUseCoupon(key, phone_number string, ctx *fasthttp.RequestCtx) error
 }
 
 type cache struct {
@@ -89,19 +90,44 @@ func (c *cache) FieldExists(key, field string, ctx *fasthttp.RequestCtx) error {
 
 }
 
-func (c *cache) CheckAndUseCoupon(key string, ctx *fasthttp.RequestCtx) error {
+func (c *cache) CheckAndUseCoupon(key, phone_number string, ctx *fasthttp.RequestCtx) error {
 
-	// define pipeline
-	pipe := c.redisClient.Pipeline()
+	var incrBy = redis.NewScript(`
+		local current_value = redis.call('HGET', KEYS[1], ARGV[1])
+		if current_value and tonumber(current_value) > 0 then
+			-- Check if phone number exists as a field
+			local phone_exists = redis.call('HEXISTS', KEYS[1], ARGV[3])
+			if tonumber(phone_exists) == 0 then
+				-- Phone number doesn't exist, increment the field and add the phone number
+				redis.call('HINCRBY', KEYS[1], ARGV[1], ARGV[2])
+				redis.call('HSET', KEYS[1], ARGV[3], 1) -- Set phone number to 1 (or any value)
+				return 1 -- Indicate new phone number added
+			else
+				-- Phone number already exists, skip increment
+				return -1
+			end
+		else
+		-- Field value not positive, skip increment
+		return 0
+		end
+	`)
 
-	commands := make([]*redis.BoolCmd, 2)
+	keys := []string{key}
+	values := []interface{}{ALLOWED_TIME_KEY, -1, phone_number}
+	num, err := incrBy.Run(ctx, c.redisClient, keys, values...).Int()
 
-	commands = append(commands, pipe.HExists(ctx, key, ALLOWED_TIME_KEY))
+	if err != nil {
+		c.l.Error().Msgf("An error occured while running lua function: %v", err)
+		return util_error.NewInternalServerError("Somthing went wrong")
+	}
 
-	// if err != nil {
-	// 	c.l.Error().Msgf("An error occured while set key in redis: %v", err)
-	// 	return util_error.NewInternalServerError("Somthing went wrong")
-	// }
+	if num == -1 {
+		return util_error.NewBadRequestError("This user already used this coupon")
+	} else if num == 0 {
+		return util_error.NewBadRequestError("The number of times allowed to use this coupon has ended")
+	} else if num != 1 {
+		return util_error.NewInternalServerError("Somthing went wrong")
+	}
 
 	return nil
 

@@ -9,7 +9,7 @@ import (
 
 type CouponDto struct {
 	Code         string    `json:"code" validate:"required"`
-	ExpireDate   time.Time `json:"expire_date" validate:"required"`
+	ExpireDate   time.Time `json:"expire_date" validate:"required,IsDate"`
 	ChargeAmount int       `json:"charge_amount" validate:"required"`
 	AllowedTimes int       `json:"allowed_times" validate:"required"`
 }
