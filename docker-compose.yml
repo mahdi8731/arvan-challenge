@@ -15,6 +15,15 @@ services:
     networks:
       node_net:
         ipv4_address: 172.28.1.4
+  nats:
+    image: nats:2.10.10-alpine
+    ports:
+      - "4222:4222" # Expose the NATS port
+      - "8222:8222"
+    # volumes:
+    #   - nats-data:/data # Optional persistent data volume
+    command:
+      - "--jetstream" # Enable Jetstream, NATS' distributed streaming platform (optional)
 
 # networking for the Redis container
 networks:

@@ -4,6 +4,8 @@ import (
 	"arvan-challenge/pkg/logger"
 	"arvan-challenge/services/wallet/api"
 	"arvan-challenge/services/wallet/pkg/env"
+	"arvan-challenge/services/wallet/pkg/subscriber"
+	"context"
 	"fmt"
 	"os"
 
@@ -22,6 +24,10 @@ func main() {
 	fmt.Println(os.Getwd())
 
 	l = logger.NewLogger(cfg.LogLevel)
+
+	s := subscriber.NewSubscriber(cfg, l)
+	c := context.Background()
+	s.Subscribe(&c)
 
 	// initialize api handler instance
 	a = api.NewApi(l, cfg)

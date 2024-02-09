@@ -19,6 +19,8 @@ import (
 type DBHandler interface {
 	CreateCoupon(c *Coupon, ctx *fasthttp.RequestCtx) (*Coupon, error)
 	UseCoupon(code, phone_number string, ctx context.Context) (*Coupon, error)
+	GetOutboxes(ctx context.Context) (*[]Outbox, error)
+	DeleteOutbox(ids *[]int, ctx context.Context) error
 }
 
 type dbHandler struct {
@@ -138,8 +140,65 @@ func (h *dbHandler) UseCoupon(code, phone_number string, ctx context.Context) (*
 		return nil, util_error.NewInternalServerError("Somthing went wrong")
 	}
 
+	_, err = tx.Exec(ctx, "INSERT INTO outbox (phone_number, amount) VALUES ($1, $2)", phone_number, ct.ChargeAmount)
+	if err != nil {
+		h.l.Error().Msgf("An error occured while executing insert query to outbox: %v", err)
+		return nil, util_error.NewInternalServerError("Somthing went wrong")
+	}
+
 	return ct, nil
 
+}
+
+func (h *dbHandler) GetOutboxes(ctx context.Context) (*[]Outbox, error) {
+
+	var outboxes []Outbox
+
+	row, err := h.db.Query(ctx, `SELECT * FROM outbox`)
+
+	if err != nil {
+		h.l.Error().Msgf("An error occured while executing query: %v", err)
+		return nil, util_error.NewInternalServerError("Somthing went wrong")
+	}
+
+	for row.Next() {
+		var outbox Outbox
+		err = row.Scan(&outbox.Id, &outbox.PhoneNumber, &outbox.Amount)
+
+		if err != nil {
+			h.l.Error().Msgf("An error occured while executing query: %v", err)
+			return nil, util_error.NewInternalServerError("Somthing went wrong")
+		}
+
+		outboxes = append(outboxes, outbox)
+	}
+
+	return &outboxes, nil
+}
+
+func (h *dbHandler) DeleteOutbox(ids *[]int, ctx context.Context) error {
+
+	tx, err := h.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			tx.Rollback(ctx)
+		} else {
+			tx.Commit(ctx)
+		}
+	}()
+
+	for _, v := range *ids {
+		_, err = tx.Exec(ctx, "DELETE FROM outbox WHERE id=$1", v)
+		if err != nil {
+			h.l.Error().Msgf("An error occured while executing delete query: %v", err)
+			return util_error.NewInternalServerError("Somthing went wrong")
+		}
+	}
+
+	return nil
 }
 
 func (h *dbHandler) CloseConnection() {

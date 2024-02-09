@@ -10,13 +10,12 @@ import (
 	pgxuuid "github.com/jackc/pgx-gofrs-uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/valyala/fasthttp"
 
 	"github.com/rs/zerolog"
 )
 
 type DBHandler interface {
-	AddTransaction(t *Transaction, w *Wallet, ctx *fasthttp.RequestCtx) (*Wallet, error)
+	AddTransaction(t *Transaction, w *Wallet, ctx context.Context) (*Wallet, error)
 	CloseConnection()
 }
 
@@ -52,10 +51,12 @@ func NewDBHandler(cfg *env.Config, l *zerolog.Logger) DBHandler {
 	}
 }
 
-func (h *dbHandler) AddTransaction(t *Transaction, w *Wallet, ctx *fasthttp.RequestCtx) (*Wallet, error) {
+func (h *dbHandler) AddTransaction(t *Transaction, w *Wallet, ctx context.Context) (*Wallet, error) {
 	var wallet Wallet
 
 	tx, err := h.db.Begin(ctx)
+
+	fmt.Print("#################")
 	if err != nil {
 		return nil, err
 	}
