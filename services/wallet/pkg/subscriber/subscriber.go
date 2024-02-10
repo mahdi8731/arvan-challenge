@@ -36,7 +36,7 @@ func NewSubscriber(cfg *env.Config, l *zerolog.Logger) Subscriber {
 func (s *subscriber) Subscribe(ctx *context.Context) {
 
 	// Use default server (localhost:4222) or specify custom address
-	nc, err := nats.Connect("nats://localhost:4222")
+	nc, err := nats.Connect(s.cfg.NATSUrl)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -70,8 +70,6 @@ func (s *subscriber) Subscribe(ctx *context.Context) {
 			PhoneNumber:  msg.PhoneNumber,
 			LastModefied: tt,
 		}
-
-		fmt.Println("tesssssssss", transaction, wallet)
 
 		s.dbHandler.AddTransaction(transaction, wallet, context.Background())
 	})

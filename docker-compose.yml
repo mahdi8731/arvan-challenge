@@ -2,7 +2,6 @@ version: "3.2"
 services:
   redis:
     image: "redis:alpine"
-
     # command: redis-server --requirepass sOmE_sEcUrE_pAsS
 
     ports:
@@ -12,9 +11,9 @@ services:
       - REDIS_REPLICATION_MODE=master
       - ALLOW_EMPTY_PASSWORD=yes
 
-    networks:
-      node_net:
-        ipv4_address: 172.28.1.4
+    # networks:
+    #   node_net:
+    #     ipv4_address: 172.28.1.4
   nats:
     image: nats:2.10.10-alpine
     ports:
@@ -24,6 +23,55 @@ services:
     #   - nats-data:/data # Optional persistent data volume
     command:
       - "--jetstream" # Enable Jetstream, NATS' distributed streaming platform (optional)
+
+  coupon:
+    image: coupon:latest
+    ports:
+      - "5001:5001" # Expose the Coupon port
+    environment:
+      - DB_HOST=coupon-database
+      - DB_PORT=5432
+      - REDIS_URI=redis:6379
+      - NATS_URI=nats://nats:4222
+      - PORT=5001
+
+  wallet:
+    image: wallet:latest
+    ports:
+      - "5002:5001" # Expose the Wallet port
+    environment:
+      - DB_HOST=wallet-database
+      - DB_PORT=5432
+      - NATS_URI=nats://nats:4222
+      - PORT=5001
+
+  coupon-database:
+    image: "postgres:latest"
+    ports:
+      - 15432:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=coupon
+    # networks:
+    #   - postgres-network
+    volumes:
+      - ./db-data/coupon/:/var/lib/postgresql/data/
+      - ./coupon_init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  wallet-database:
+    image: "postgres:latest"
+    ports:
+      - 25432:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=wallet
+    # networks:
+    #   - postgres-network
+    volumes:
+      - ./db-data/wallet/:/var/lib/postgresql/data/
+      - ./wallet_init.sql:/docker-entrypoint-initdb.d/init.sql
 
 # networking for the Redis container
 networks:

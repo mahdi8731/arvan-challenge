@@ -44,7 +44,7 @@ func (job *job) Do(ctx context.Context) error {
 
 	if len(*messages) > 0 {
 
-		nc, err := nats.Connect("nats://localhost:4222")
+		nc, err := nats.Connect(job.cfg.NATSUrl)
 		if err != nil {
 			job.l.Error().Msgf("can not connect to nats: %v", err)
 			return err
