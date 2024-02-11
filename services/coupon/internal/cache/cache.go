@@ -17,6 +17,7 @@ var ALLOWED_TIME_KEY = "allowed-times"
 type Cache interface {
 	SetKeys(key string, fv map[string]any, ctx *fasthttp.RequestCtx) error
 	SetKeyForCoupon(coupon *db.Coupon, ctx *fasthttp.RequestCtx) error
+	FieldExists(key, field string, ctx *fasthttp.RequestCtx) error
 	CheckAndUseCoupon(key, phone_number string, ctx *fasthttp.RequestCtx) error
 }
 

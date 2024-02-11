@@ -1,47 +1,3 @@
-// package cache_test
-
-// import (
-// 	"context"
-// 	"log"
-// 	"testing"
-
-// 	"github.com/redis/go-redis/v9"
-// 	"github.com/testcontainers/testcontainers-go"
-// 	"github.com/testcontainers/testcontainers-go/wait"
-// )
-
-// func TestWithRedis(t *testing.T) {
-// 	ctx := context.Background()
-// 	req := testcontainers.ContainerRequest{
-// 		Image:        "redis:latest",
-// 		ExposedPorts: []string{"6379/tcp"},
-// 		WaitingFor:   wait.ForLog("Ready to accept connections"),
-// 	}
-// 	redisC, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-// 		ContainerRequest: req,
-// 		Started:          true,
-// 	})
-// 	if err != nil {
-// 		log.Fatalf("Could not start redis: %s", err)
-// 	}
-// 	defer func() {
-// 		if err := redisC.Terminate(ctx); err != nil {
-// 			log.Fatalf("Could not stop redis: %s", err)
-// 		}
-// 	}()
-
-// 	endpoint, err := redisC.Endpoint(ctx, "")
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
-
-// 	client := redis.NewClient(&redis.Options{
-// 		Addr: endpoint,
-// 	})
-
-// 	_ = client
-// }
-
 package cache
 
 import (
@@ -57,9 +13,14 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-func TestSetKeys(t *testing.T) {
+var (
+	cHnandler Cache
+	mock      redismock.ClientMock
+)
+
+func TestMain(m *testing.M) {
 	// Create a new mock Redis client
-	mockClient, mock := redismock.NewClientMock()
+	mockClient, Mock := redismock.NewClientMock()
 
 	// Initialize a mock logger
 	logger := zerolog.New(os.Stderr)
@@ -75,11 +36,18 @@ func TestSetKeys(t *testing.T) {
 
 	ca.redisClient = mockClient
 
+	cHnandler = c
+	mock = Mock
+
+}
+
+func TestSetKeys(t *testing.T) {
+
 	// Set up expectations
 	mock.ExpectHSet("test_key", map[string]interface{}{"test_field": "test_value"}).SetErr(nil)
 
 	// Execute the method under test
-	err := c.SetKeys("test_key", map[string]interface{}{"test_field": "test_value"}, &fasthttp.RequestCtx{})
+	err := cHnandler.SetKeys("test_key", map[string]interface{}{"test_field": "test_value"}, &fasthttp.RequestCtx{})
 
 	// Check assertions
 	assert.NoError(t, err)
@@ -87,19 +55,7 @@ func TestSetKeys(t *testing.T) {
 }
 
 func TestSetKeyForCoupon(t *testing.T) {
-	// Create a new mock Redis client
-	mockClient, mock := redismock.NewClientMock()
 
-	// Initialize a mock logger
-	logger := zerolog.New(os.Stderr)
-
-	// Create a cache instance with the mock Redis client
-	c := &cache{
-		redisClient: mockClient,
-		l:           &logger,
-	}
-
-	// Set up expectations
 	mock.ExpectHSet("test_coupon_code", ALLOWED_TIME_KEY, 5).SetErr(nil)
 	mock.ExpectExpire("test_coupon_code", time.Until(time.Now().Add(time.Hour))).SetErr(nil)
 
@@ -109,7 +65,7 @@ func TestSetKeyForCoupon(t *testing.T) {
 		AllowedTimes: 5,
 		ExpireDate:   time.Now().Add(time.Hour),
 	}
-	err := c.SetKeyForCoupon(coupon, &fasthttp.RequestCtx{})
+	err := cHnandler.SetKeyForCoupon(coupon, &fasthttp.RequestCtx{})
 
 	// Check assertions
 	assert.NoError(t, err)
@@ -117,19 +73,12 @@ func TestSetKeyForCoupon(t *testing.T) {
 }
 
 func TestFieldExists(t *testing.T) {
-	// Create a new mock Redis client
-	mockClient, mock := redismock.NewClientMock()
-
-	// Create a cache instance with the mock Redis client
-	c := &cache{
-		redisClient: mockClient,
-	}
 
 	// Set up expectations
 	mock.ExpectHExists("test_key", "test_field").SetErr(nil)
 
 	// Execute the method under test
-	err := c.FieldExists("test_key", "test_field", &fasthttp.RequestCtx{})
+	err := cHnandler.FieldExists("test_key", "test_field", &fasthttp.RequestCtx{})
 
 	// Check assertions
 	assert.NoError(t, err)
