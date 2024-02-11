@@ -25,6 +25,10 @@ services:
       - "--jetstream" # Enable Jetstream, NATS' distributed streaming platform (optional)
 
   coupon:
+    build:
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: coupon
     image: coupon:latest
     ports:
       - "5001:5001" # Expose the Coupon port
@@ -36,6 +40,10 @@ services:
       - PORT=5001
 
   wallet:
+    build:
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: wallet
     image: wallet:latest
     ports:
       - "5002:5001" # Expose the Wallet port

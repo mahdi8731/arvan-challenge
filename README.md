@@ -28,7 +28,13 @@ The project integrates with the following third-party libraries:
 
 ## Getting Started
 
-To set up and run the project locally, just run this command:
+To set up and run the project locally, just run two commands:
+
+```
+docker compose build
+```
+
+and then
 
 ```
 docker compose up
