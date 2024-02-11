@@ -11,13 +11,12 @@ import (
 	pgxuuid "github.com/jackc/pgx-gofrs-uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/valyala/fasthttp"
 
 	"github.com/rs/zerolog"
 )
 
 type DBHandler interface {
-	CreateCoupon(c *Coupon, ctx *fasthttp.RequestCtx) (*Coupon, error)
+	CreateCoupon(c *Coupon, ctx context.Context) (*Coupon, error)
 	GetCoupon(code string, ctx context.Context) (*Coupon, error)
 	GetUsersByCoupon(code string, ctx context.Context) (*[]string, error)
 	UseCoupon(code, phone_number string, ctx context.Context) (*Coupon, error)
@@ -59,7 +58,7 @@ func NewDBHandler(cfg *env.Config, l *zerolog.Logger) DBHandler {
 	}
 }
 
-func (h *dbHandler) CreateCoupon(c *Coupon, ctx *fasthttp.RequestCtx) (*Coupon, error) {
+func (h *dbHandler) CreateCoupon(c *Coupon, ctx context.Context) (*Coupon, error) {
 	var coupon Coupon
 
 	ct, err := h.GetCoupon(c.Code, ctx)

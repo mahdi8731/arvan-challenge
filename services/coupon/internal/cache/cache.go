@@ -9,16 +9,15 @@ import (
 
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
-	"github.com/valyala/fasthttp"
 )
 
 var ALLOWED_TIME_KEY = "allowed-times"
 
 type Cache interface {
-	SetKeys(key string, fv map[string]any, ctx *fasthttp.RequestCtx) error
-	SetKeyForCoupon(coupon *db.Coupon, ctx *fasthttp.RequestCtx) error
-	FieldExists(key, field string, ctx *fasthttp.RequestCtx) error
-	CheckAndUseCoupon(key, phone_number string, ctx *fasthttp.RequestCtx) error
+	SetKeys(key string, fv map[string]any, ctx context.Context) error
+	SetKeyForCoupon(coupon *db.Coupon, ctx context.Context) error
+	FieldExists(key, field string, ctx context.Context) error
+	CheckAndUseCoupon(key, phone_number string, ctx context.Context) error
 }
 
 type cache struct {
@@ -45,7 +44,7 @@ func NewCache(cfg *env.Config, l *zerolog.Logger) Cache {
 	}
 }
 
-func (c *cache) SetKeys(key string, fv map[string]any, ctx *fasthttp.RequestCtx) error {
+func (c *cache) SetKeys(key string, fv map[string]any, ctx context.Context) error {
 
 	err := c.redisClient.HSet(ctx, key, fv).Err()
 
@@ -58,7 +57,7 @@ func (c *cache) SetKeys(key string, fv map[string]any, ctx *fasthttp.RequestCtx)
 
 }
 
-func (c *cache) SetKeyForCoupon(coupon *db.Coupon, ctx *fasthttp.RequestCtx) error {
+func (c *cache) SetKeyForCoupon(coupon *db.Coupon, ctx context.Context) error {
 
 	err := c.redisClient.HSet(ctx, coupon.Code, ALLOWED_TIME_KEY, coupon.AllowedTimes).Err()
 
@@ -78,7 +77,7 @@ func (c *cache) SetKeyForCoupon(coupon *db.Coupon, ctx *fasthttp.RequestCtx) err
 
 }
 
-func (c *cache) FieldExists(key, field string, ctx *fasthttp.RequestCtx) error {
+func (c *cache) FieldExists(key, field string, ctx context.Context) error {
 
 	err := c.redisClient.HExists(ctx, key, field).Err()
 
@@ -91,7 +90,7 @@ func (c *cache) FieldExists(key, field string, ctx *fasthttp.RequestCtx) error {
 
 }
 
-func (c *cache) CheckAndUseCoupon(key, phone_number string, ctx *fasthttp.RequestCtx) error {
+func (c *cache) CheckAndUseCoupon(key, phone_number string, ctx context.Context) error {
 
 	var incrBy = redis.NewScript(`
 		local current_value = redis.call('HGET', KEYS[1], ARGV[1])

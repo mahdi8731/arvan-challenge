@@ -3,6 +3,7 @@ package db
 import (
 	"arvan-challenge/services/coupon/pkg/env"
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -72,6 +73,8 @@ func TestMain(m *testing.M) {
 	cfg = c
 	logger = &l
 
+	fmt.Println("sss")
+
 	code := m.Run()
 	os.Exit(code)
 }
@@ -92,7 +95,7 @@ func TestCreateCoupon(t *testing.T) {
 	dbHandler := NewDBHandler(cfg, logger)
 
 	// Test CreateCoupon method
-	createdCoupon, err := dbHandler.CreateCoupon(coupon, nil)
+	createdCoupon, err := dbHandler.CreateCoupon(coupon, context.Background())
 
 	// Check for errors
 	if err != nil {
