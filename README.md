@@ -55,4 +55,4 @@ This project is licensed under the [MIT License](LICENSE), allowing for open col
 
 ## Contact
 
-For any inquiries or support regarding the project, feel free to contact the project maintainers via [email](mailto:example@example.com) or by opening an issue on the GitHub repository.
+For any inquiries or support regarding the project, feel free to contact the project maintainers via [email](m.a1378.1387@gmail.com) or by opening an issue on the GitHub repository.
