@@ -17,6 +17,7 @@ import (
 type CouponController interface {
 	CreateCoupon(ctx *fiber.Ctx) error
 	UseCoupon(ctx *fiber.Ctx) error
+	GetUsersByCoupons(ctx *fiber.Ctx) error
 }
 
 type couponController struct {
@@ -109,5 +110,36 @@ func (c *couponController) UseCoupon(ctx *fiber.Ctx) error {
 	// coupon := coupon_dto.ConvertToModel()
 	return ctx.Status(200).JSON(map[string]interface{}{
 		"message": "success",
+	})
+}
+
+func (c *couponController) GetUsersByCoupons(ctx *fiber.Ctx) error {
+
+	code := ctx.Params("code")
+
+	// // map body to dto instance
+	// if err := ctx.BodyParser(use_coupon_dto); err != nil {
+	// 	c.l.Warn().Msgf(err.Error())
+	// 	return util_error.NewInternalServerError(err.Error())
+	// }
+
+	// err := validate.Struct(use_coupon_dto)
+	// if validationErrors, ok := err.(validator.ValidationErrors); err != nil && ok {
+	// 	fmt.Println(ok, err)
+	// 	c.l.Warn().Msg(validationErrors.Error())
+	// 	return util_error.NewInternalServerError(validationErrors.Error())
+	// }
+
+	val, err := c.db.GetUsersByCoupon(code, ctx.Context())
+
+	fmt.Println(val, code)
+
+	if err != nil {
+		return err
+	}
+
+	// coupon := coupon_dto.ConvertToModel()
+	return ctx.Status(200).JSON(map[string]interface{}{
+		"users": val,
 	})
 }

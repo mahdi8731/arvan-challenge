@@ -19,6 +19,7 @@ import (
 type DBHandler interface {
 	CreateCoupon(c *Coupon, ctx *fasthttp.RequestCtx) (*Coupon, error)
 	GetCoupon(code string, ctx context.Context) (*Coupon, error)
+	GetUsersByCoupon(code string, ctx context.Context) (*[]string, error)
 	UseCoupon(code, phone_number string, ctx context.Context) (*Coupon, error)
 	GetOutboxes(ctx context.Context) (*[]Outbox, error)
 	DeleteOutbox(ids *[]int, ctx context.Context) error
@@ -64,8 +65,14 @@ func (h *dbHandler) CreateCoupon(c *Coupon, ctx *fasthttp.RequestCtx) (*Coupon, 
 	ct, err := h.GetCoupon(c.Code, ctx)
 
 	if err != nil {
-		h.l.Error().Msgf("An error occured while executing query: %v", err)
-		return &coupon, util_error.NewInternalServerError("Somthing went wrong")
+		switch t := err.(type) {
+		case *util_error.InternalServerError:
+			h.l.Error().Msgf("An error occured while executing query: %v", t)
+			return &coupon, util_error.NewInternalServerError("Somthing went wrong")
+		case *util_error.BadRequestError:
+			break
+		}
+
 	} else if ct.Code == c.Code {
 		return &coupon, util_error.NewBadRequestError("This code has already been defined")
 	}
@@ -94,13 +101,15 @@ func (h *dbHandler) GetCoupon(code string, ctx context.Context) (*Coupon, error)
 		return &coupon, util_error.NewInternalServerError("Somthing went wrong")
 	}
 
-	for row.Next() {
+	if row.Next() {
 		err = row.Scan(&coupon.Id, &coupon.Code, &coupon.ExpireDate, &coupon.ChargeAmount, &coupon.AllowedTimes)
 
 		if err != nil {
 			h.l.Error().Msgf("An error occured while executing query: %v", err)
 			return &coupon, util_error.NewInternalServerError("Somthing went wrong")
 		}
+	} else {
+		return nil, util_error.NewBadRequestError("This code is not a valid coupon")
 	}
 
 	return &coupon, nil
@@ -113,7 +122,7 @@ func (h *dbHandler) UseCoupon(code, phone_number string, ctx context.Context) (*
 
 	if err != nil {
 		h.l.Error().Msgf("An error occured while executing query: %v", err)
-		return ct, util_error.NewInternalServerError("Somthing went wrong")
+		return nil, err
 	}
 
 	tx, err := h.db.Begin(ctx)
@@ -149,6 +158,39 @@ func (h *dbHandler) UseCoupon(code, phone_number string, ctx context.Context) (*
 	}
 
 	return ct, nil
+
+}
+
+func (h *dbHandler) GetUsersByCoupon(code string, ctx context.Context) (*[]string, error) {
+
+	_, err := h.GetCoupon(code, ctx)
+
+	if err != nil {
+		h.l.Error().Msgf("An error occured while executing query: %v", err)
+		return nil, err
+	}
+
+	var coupons []string
+
+	row, err := h.db.Query(ctx, `SELECT phone_number FROM couponsـused WHERE coupon_id = (select coupon_id from coupons where code = $1 )`, code)
+
+	if err != nil {
+		h.l.Error().Msgf("An error occured while executing query: %v", err)
+		return nil, util_error.NewInternalServerError("Somthing went wrong")
+	}
+
+	for row.Next() {
+		var coupon string
+		err = row.Scan(&coupon)
+
+		if err != nil {
+			h.l.Error().Msgf("An error occured while executing query: %v", err)
+			return nil, util_error.NewInternalServerError("Somthing went wrong")
+		}
+		coupons = append(coupons, coupon)
+	}
+
+	return &coupons, nil
 
 }
 

@@ -5,7 +5,6 @@ import (
 	"arvan-challenge/services/wallet/pkg/env"
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"time"
 
@@ -44,7 +43,7 @@ func (s *subscriber) Subscribe(ctx *context.Context) {
 
 	// Subscribe to a specific topic
 	_, err = nc.Subscribe("wallet", func(m *nats.Msg) {
-		fmt.Println("Received message:", string(m.Data))
+		s.l.Info().Msgf("Received message: %s", string(m.Data))
 
 		var msg Message
 
