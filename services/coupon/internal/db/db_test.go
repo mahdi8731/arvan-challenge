@@ -19,8 +19,7 @@ import (
 )
 
 var (
-	logger *zerolog.Logger
-	cfg    *env.Config
+	dbHandler_test DBHandler
 )
 
 func TestMain(m *testing.M) {
@@ -70,8 +69,7 @@ func TestMain(m *testing.M) {
 		DBName: dbName,
 	}
 
-	cfg = c
-	logger = &l
+	dbHandler_test = NewDBHandler(c, &l)
 
 	fmt.Println("sss")
 
@@ -80,22 +78,20 @@ func TestMain(m *testing.M) {
 }
 
 func TestCreateCoupon(t *testing.T) {
-	id, _ := uuid.NewV7()
-
-	// Initialize a mock coupon
+	// Initialize mock data
+	id := uuid.New()
 	coupon := &Coupon{
 		Id:           id,
 		Code:         "TESTCODE",
-		ExpireDate:   time.Now().AddDate(0, 0, 7), // Expires in 7 days
+		ExpireDate:   time.Now().AddDate(0, 0, 7),
 		ChargeAmount: 50,
 		AllowedTimes: 5,
 	}
 
-	// Initialize a new DBHandler instance
-	dbHandler := NewDBHandler(cfg, logger)
+	// Initialize a mock DBHandler instance
 
 	// Test CreateCoupon method
-	createdCoupon, err := dbHandler.CreateCoupon(coupon, context.Background())
+	createdCoupon, err := dbHandler_test.CreateCoupon(coupon, context.Background())
 
 	// Check for errors
 	if err != nil {
@@ -106,21 +102,16 @@ func TestCreateCoupon(t *testing.T) {
 	if createdCoupon == nil {
 		t.Errorf("CreateCoupon did not return the created coupon")
 	}
-
-	// Close the connection
-	dbHandler.CloseConnection()
 }
 
 func TestGetCoupon(t *testing.T) {
-
 	// Initialize a mock coupon code
 	code := "TESTCODE"
 
-	// Initialize a new DBHandler instance
-	dbHandler := NewDBHandler(cfg, logger)
+	// Initialize a mock DBHandler instance
 
 	// Test GetCoupon method
-	retrievedCoupon, err := dbHandler.GetCoupon(code, context.Background())
+	retrievedCoupon, err := dbHandler_test.GetCoupon(code, context.Background())
 
 	// Check for errors
 	if err != nil {
@@ -131,9 +122,26 @@ func TestGetCoupon(t *testing.T) {
 	if retrievedCoupon == nil {
 		t.Errorf("GetCoupon did not return the retrieved coupon")
 	}
+}
 
-	// Close the connection
-	dbHandler.CloseConnection()
+func TestGetUsersByCoupon(t *testing.T) {
+	// Initialize a mock coupon code
+	code := "TESTCODE"
+
+	// Initialize a mock DBHandler instance
+
+	// Test GetUsersByCoupon method
+	users, err := dbHandler_test.GetUsersByCoupon(code, context.Background())
+
+	// Check for errors
+	if err != nil {
+		t.Errorf("GetUsersByCoupon returned an error: %v", err)
+	}
+
+	// Check if users are retrieved correctly
+	if users == nil {
+		t.Errorf("GetUsersByCoupon did not return the retrieved users")
+	}
 }
 
 func TestUseCoupon(t *testing.T) {
@@ -141,28 +149,22 @@ func TestUseCoupon(t *testing.T) {
 	code := "TESTCODE"
 	phoneNumber := "1234567890"
 
-	// Initialize a new DBHandler instance
-	dbHandler := NewDBHandler(cfg, logger)
+	// Initialize a mock DBHandler instance
 
 	// Test UseCoupon method
-	_, err := dbHandler.UseCoupon(code, phoneNumber, context.Background())
+	_, err := dbHandler_test.UseCoupon(code, phoneNumber, context.Background())
 
 	// Check for errors
 	if err != nil {
 		t.Errorf("UseCoupon returned an error: %v", err)
 	}
-
-	// Close the connection
-	dbHandler.CloseConnection()
 }
 
 func TestGetOutboxes(t *testing.T) {
-
-	// Initialize a new DBHandler instance
-	dbHandler := NewDBHandler(cfg, logger)
+	// Initialize a mock DBHandler instance
 
 	// Test GetOutboxes method
-	outboxes, err := dbHandler.GetOutboxes(context.Background())
+	outboxes, err := dbHandler_test.GetOutboxes(context.Background())
 
 	// Check for errors
 	if err != nil {
@@ -173,26 +175,19 @@ func TestGetOutboxes(t *testing.T) {
 	if outboxes == nil {
 		t.Errorf("GetOutboxes did not return the retrieved outboxes")
 	}
-
-	// Close the connection
-	dbHandler.CloseConnection()
 }
 
 func TestDeleteOutbox(t *testing.T) {
 	// Initialize mock outbox IDs
 	outboxIDs := []int{1, 2, 3}
 
-	// Initialize a new DBHandler instance
-	dbHandler := NewDBHandler(cfg, logger)
+	// Initialize a mock DBHandler instance
 
 	// Test DeleteOutbox method
-	err := dbHandler.DeleteOutbox(&outboxIDs, context.Background())
+	err := dbHandler_test.DeleteOutbox(&outboxIDs, context.Background())
 
 	// Check for errors
 	if err != nil {
 		t.Errorf("DeleteOutbox returned an error: %v", err)
 	}
-
-	// Close the connection
-	dbHandler.CloseConnection()
 }
