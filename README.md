@@ -6,7 +6,7 @@ This GitHub project is a coupon management and wallet service designed to facili
 
 - **Postgres**: Utilized for storing coupon and wallet data, providing a reliable and scalable database solution.
 - **Redis**: Employed for caching and enhancing the performance of certain operations within the service.
-- **NATS**: Used as a messaging system to facilitate communication between different components of the service.
+- **NATS**: Used as a messaging system to facilitate communication between different components of the service. Selected over alternatives like Kafka or RabbitMQ for its lower latency, ensuring swift communication between service components.
 
 ## Third-Party Dependencies
 
@@ -14,7 +14,7 @@ The project integrates with the following third-party libraries:
 
 - **PGX**: Chosen over Gorm for its superior performance and direct interaction with Postgres, enhancing efficiency in handling database operations.
 - **go-redis**: Utilized for interacting with Redis, offering efficient caching mechanisms to optimize performance.
-- **nats.go**: Selected over alternatives like Kafka or RabbitMQ for its lower latency, ensuring swift communication between service components.
+- **nats.go**: nats.go is a go client for nats.
 
 ## Additional Notes
 
