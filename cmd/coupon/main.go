@@ -28,6 +28,7 @@ func main() {
 	l = logger.NewLogger(cfg.LogLevel)
 
 	jh := job.NewJob(cfg, l)
+	defer jh.Close()
 
 	// create a Scheduler
 	s, _ := gocron.NewScheduler()

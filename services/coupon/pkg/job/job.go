@@ -13,19 +13,26 @@ import (
 
 type Job interface {
 	Do(ctx context.Context) error
+	Close()
 }
 
 type job struct {
 	cfg       *env.Config
 	l         *zerolog.Logger
+	nc        *nats.Conn
 	dbHandler db.DBHandler
 }
 
 func NewJob(cfg *env.Config, l *zerolog.Logger) Job {
 	dbHandler := db.NewDBHandler(cfg, l)
+	n, err := nats.Connect(cfg.NATSUrl)
+	if err != nil {
+		l.Fatal().Msgf("can not connect to nats: %v", err)
+	}
 	return &job{
 		cfg:       cfg,
 		l:         l,
+		nc:        n,
 		dbHandler: dbHandler,
 	}
 }
@@ -44,21 +51,13 @@ func (job *job) Do(ctx context.Context) error {
 
 	if len(*messages) > 0 {
 
-		nc, err := nats.Connect(job.cfg.NATSUrl)
-		if err != nil {
-			job.l.Error().Msgf("can not connect to nats: %v", err)
-			return err
-		}
-
-		defer nc.Close()
-
 		for _, v := range *messages {
 			j, err := json.Marshal(v)
 			if err != nil {
 				job.l.Error().Msgf("ERROR when marshalling message: %v", err)
 				continue
 			}
-			err = nc.Publish("wallet", j)
+			err = job.nc.Publish("wallet", j)
 			if err != nil {
 				job.l.Error().Msgf("ERROR when publishing message: %v", err)
 				break
@@ -80,4 +79,8 @@ func (job *job) Do(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (job *job) Close() {
+	job.nc.Close()
 }

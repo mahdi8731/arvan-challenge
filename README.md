@@ -40,12 +40,6 @@ and then
 docker compose up
 ```
 
-<!-- 1. Install and configure Postgres, Redis, and NATS on your system.
-2. Clone the repository to your local machine.
-3. Install the necessary dependencies using a package manager like Go modules.
-4. Configure environment variables for database and messaging service connections.
-5. Run the project using the appropriate commands specified in the project's documentation. -->
-
 ## Contributing
 
 Contributions to the project are welcome. To contribute, follow these guidelines:
