@@ -12,7 +12,7 @@ type Config struct {
 	DBPass   string `env:"DB_PASS" envDefault:"postgres"`
 	DBUser   string `env:"DB_USER" envDefault:"postgres"`
 	DBName   string `env:"DB_Name" envDefault:"wallet"`
-	NATSUrl  string `env:"NATS_URI" envDefault:"localhost:6379"`
+	NATSUrl  string `env:"NATS_URI" envDefault:"localhost:4222"`
 	Port     int    `env:"PORT" envDefault:"5003"`
 	DBPort   int    `env:"DB_PORT" envDefault:"5432"`
 }

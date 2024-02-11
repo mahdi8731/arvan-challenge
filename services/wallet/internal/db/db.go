@@ -16,6 +16,7 @@ import (
 
 type DBHandler interface {
 	AddTransaction(t *Transaction, w *Wallet, ctx context.Context) (*Wallet, error)
+	GetUserTransactions(phone_number string, ctx context.Context) (*[]Transaction, error)
 	CloseConnection()
 }
 
@@ -56,7 +57,6 @@ func (h *dbHandler) AddTransaction(t *Transaction, w *Wallet, ctx context.Contex
 
 	tx, err := h.db.Begin(ctx)
 
-	fmt.Print("#################")
 	if err != nil {
 		return nil, err
 	}
@@ -87,6 +87,34 @@ func (h *dbHandler) AddTransaction(t *Transaction, w *Wallet, ctx context.Contex
 	}
 
 	return &wallet, nil
+}
+
+func (h *dbHandler) GetUserTransactions(phone_number string, ctx context.Context) (*[]Transaction, error) {
+
+	var transactions []Transaction
+
+	row, err := h.db.Query(ctx, `SELECT id, description, date, amount FROM transactions WHERE wallet_id =
+	(SELECT wallet_id From wallet WHERE phone_number = $1)`, phone_number)
+
+	if err != nil {
+		h.l.Error().Msgf("An error occured while executing query: %v", err)
+		return nil, util_error.NewInternalServerError("Somthing went wrong")
+	}
+
+	for row.Next() {
+		var transaction Transaction
+
+		err = row.Scan(&transaction.Id, &transaction.Description, &transaction.Date, &transaction.Amount)
+
+		if err != nil {
+			h.l.Error().Msgf("An error occured while executing query: %v", err)
+			return nil, util_error.NewInternalServerError("Somthing went wrong")
+		}
+
+		transactions = append(transactions, transaction)
+	}
+
+	return &transactions, nil
 }
 
 func (h *dbHandler) CloseConnection() {

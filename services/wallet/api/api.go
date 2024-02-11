@@ -70,7 +70,8 @@ func (a *api) AddControllers() {
 
 	walletController := v1.NewWalletController(a.dbHandler, a.logger, a.config)
 
-	api_v1.Post("/add-transaction", walletController.AddTransaction) // POST /api/v1/add-transaction
+	api_v1.Post("/add-transaction", walletController.AddTransaction)                     // POST /api/v1/add-transaction
+	api_v1.Post("/get-transactions/:phone_number", walletController.GetUserTransactions) // POST /api/v1/get-transactions
 }
 
 func (a *api) Run() {

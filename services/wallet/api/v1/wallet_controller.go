@@ -15,6 +15,7 @@ import (
 
 type WalletController interface {
 	AddTransaction(ctx *fiber.Ctx) error
+	GetUserTransactions(ctx *fiber.Ctx) error
 }
 
 type walletController struct {
@@ -66,4 +67,25 @@ func (c *walletController) AddTransaction(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.Status(200).JSON(val)
+}
+
+func (c *walletController) GetUserTransactions(ctx *fiber.Ctx) error {
+
+	phone_number := ctx.Params("phone_number")
+
+	// err := validate.StructFiltered(phone_number, validate.VarWithValue())
+	// fmt.Println(err)
+	// if validationErrors, ok := err.(validator.ValidationErrors); err != nil && ok {
+	// 	c.l.Warn().Msg(validationErrors.Error())
+	// 	return util_error.NewInternalServerError(validationErrors.Error())
+	// }
+
+	val, err := c.db.GetUserTransactions(phone_number, ctx.Context())
+
+	if err != nil {
+		return err
+	}
+
+	return ctx.Status(200).JSON(val)
+
 }

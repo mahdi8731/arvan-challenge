@@ -13,7 +13,7 @@ type Config struct {
 	DBUser   string `env:"DB_USER" envDefault:"postgres"`
 	DBName   string `env:"DB_Name" envDefault:"coupon"`
 	RedisUrl string `env:"REDIS_URI" envDefault:"localhost:6379"`
-	NATSUrl  string `env:"NATS_URI" envDefault:"localhost:6379"`
+	NATSUrl  string `env:"NATS_URI" envDefault:"localhost:4222"`
 	Port     int    `env:"PORT" envDefault:"5002"`
 	DBPort   int    `env:"DB_PORT" envDefault:"5432"`
 }

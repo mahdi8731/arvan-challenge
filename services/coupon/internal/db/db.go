@@ -18,9 +18,11 @@ import (
 
 type DBHandler interface {
 	CreateCoupon(c *Coupon, ctx *fasthttp.RequestCtx) (*Coupon, error)
+	GetCoupon(code string, ctx context.Context) (*Coupon, error)
 	UseCoupon(code, phone_number string, ctx context.Context) (*Coupon, error)
 	GetOutboxes(ctx context.Context) (*[]Outbox, error)
 	DeleteOutbox(ids *[]int, ctx context.Context) error
+	CloseConnection()
 }
 
 type dbHandler struct {
